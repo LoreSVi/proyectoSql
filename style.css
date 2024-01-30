@@ -1,3 +1,16 @@
 .idea-link{
     height: 300px;
 }
+
+.links_acceso{
+background-color: rgb(252, 73, 171);
+color:rgb(245, 240, 243);
+}
+
+.links_acceso a {
+    color: white;
+}
+
+.links_acceso a:hover {
+    color:yellow
+}
