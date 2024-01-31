@@ -5,7 +5,6 @@ create database geneseindumentaria;
 use geneseindumentaria; 
 
 -- Creación de tablas--
-
 CREATE TABLE categoria(
 id_categoria INT AUTO_INCREMENT NOT NULL,
 nombre_categoria VARCHAR(25) NOT NULL,
@@ -224,13 +223,34 @@ INSERT INTO pedido (num_pedido, fecha_creacion, cant_requerida, estado, id_produ
 (null, '2023-11-02', 1, 'despachado', 11),
 (null, '2023-11-02', 1, 'despachado', 1)
 ;
+INSERT INTO pedido (num_pedido, fecha_creacion, cant_requerida, estado, id_producto)
+VALUES 
+(null, '2024-01-20', 1, 'despachado', 11),
+(null, '2024-01-20', 1, 'despachado', 11),
+(null, '2024-01-20', 1, 'despachado', 8),
+(null, '2024-01-20', 1, 'despachado', 10),
+(null, '2024-01-20', 1, 'despachado', 6),
+(null, '2024-01-20', 1, 'despachado', 10),
+(null, '2024-01-20', 1, 'despachado', 14),
+(null, '2024-01-20', 1, 'despachado', 15)
+;
 
-INSERT INTO envio ( id_envio, fecha_envio, transportista, num_pedido, id_cliente, fecha_entrega) VALUES
+INSERT INTO envio ( id_envio, fecha_envio, transportista, num_pedido, id_cliente, fecha_entrega) 
+VALUES
 (null, '2023-11-02', 'correo Argentino', 8, 2, '2023-11-04'),
 (null, '2023-11-02', 'correo Argentino', 9, 3, '2023-11-04'),
 (null, '2023-11-02', 'correo Argentino', 10, 6, '2023-11-04'),
-(null, '2023-11-02', 'correo Argentino', 11, 9, '2023-11-04')
+(null, '2023-11-02', 'correo Argentino', 11, 9, '2023-11-04'),
+(null, '2024-01-20', 'correo Argentino', '12', '2', '2024-01-20'),
+(null, '2024-01-20', 'correo Argentino', '13', '2', '2024-01-20'),
+(null, '2024-01-20', 'correo Argentino', '14', '2', '2024-01-20'),
+(null, '2024-01-20', 'correo Argentino', '15', '5', '2024-01-20'),
+(null, '2024-01-20', 'correo Argentino', '16', '3', '2024-01-20'),
+(null, '2024-01-20', 'correo Argentino', '17', '6', '2024-01-20'),
+(null, '2024-01-20', 'correo Argentino', '18', '2', '2024-01-20'),
+(null, '2024-01-20', 'correo Argentino', '19', '4', '2024-01-20')
 ;
+
 
 INSERT INTO ventas (id_venta, cant_vendida, importe_total, id_envio) VALUES
 (null, 1, 8500.00, 1),
@@ -319,6 +339,7 @@ CREATE OR REPLACE VIEW ped_despachado_nombreprod AS
 SELECT 
     p.id_producto,
     pd.nombre_producto,
+    pd.precio_unitario,
     p.cant_requerida,
     p.estado, 
     p.num_pedido
@@ -326,8 +347,9 @@ FROM
     pedido p
  INNER JOIN 
     producto pd ON p.id_producto = pd.id_producto
-   where estado like upper('despachado') ;
-
+   where estado like upper('despachado') 
+   and  fecha_creacion = '2024-01-20'
+;
 SELECT * FROM ped_despachado_nombreprod;
 
 
@@ -458,4 +480,44 @@ CREATE USER 'usuario'@'localhost' IDENTIFIED BY 'delfin123';
 
 
 
+SELECT @@AUTOCOMMIT;
+SET AUTOCOMMIT = 0;
+
+-- TRANSACCION que de acuerdo a la cantidad requerida de producto descuenta el stock--
+-- Inicio la transacción
+START TRANSACTION;
+   UPDATE pedido 
+   SET cant_requerida = 2
+WHERE id_producto = 11;
+    SELECT * FROM pedido;
+  /*  ROLLBACK;*/
+     SELECT * FROM producto;
+    -- Hacer el registro en la tabla producto
+    UPDATE producto 
+    SET stock = 6
+    WHERE id_producto = 11;
+    -- Confirmar la transacción
+    COMMIT;
+      SELECT * FROM producto;
+    
+
+-- TRANSACCION que registra como ventas los pedidos despachados--
+-- Inicio la transacción
+START TRANSACTION;
+ INSERT INTO ventas (id_venta, cant_vendida, importe_total, id_envio)
+VALUES (null,1,'8500.00', 5),
+    (null,1,'8500.00', 6),
+    (null,1,'4000.00', 7),
+    (null,1,'8500.00', 8)
+    ;
+SAVEPOINT primeros4;
+INSERT INTO ventas (id_venta, cant_vendida, importe_total, id_envio)
+VALUES (null,1,'1200.00', 9),
+    (null,1,'8500.00', 10),
+    (null,1,'3800.00', 11),
+    (null,1,'8500.00', 12)
+    ;
+ROLLBACK TO SAVEPOINT primeros4;
+
+-- relase SAVEPOINT primeros4; 
 
